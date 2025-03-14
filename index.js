@@ -6,7 +6,7 @@ const session = require('express-session');
 const connectDb = require('./config/connectDB');
 const userRouter = require('./router/userRouter');
 
-
+console.log('hei')
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.set('view engine', 'ejs');
