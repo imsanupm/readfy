@@ -11,6 +11,37 @@ const loadHomepage = async (req,res)=>{
     }
 }
 
+const loadLogin = async(req,res)=>{
+    try {
+        res.render('login')
+    } catch (error) {
+        console.log(`error during loading login page ${error}`)
+    }
+}
+
+const signin = async(req,res)=>{
+     try {
+        const {email,password} = req.body;
+        const userData = await User.findOne({email:email})
+        if(userData){
+            const passwordMatch = await bcrypt.compare(password,userData.password)
+            if(passwordMatch){
+                  req.session.user_id = userData._id;
+                  res.redirect('/home');
+            }else {
+                res.render('login',{message:'Incorrect password'})
+            }
+        }else{
+          
+            res.render('login',{message:'user with this email id is not exist'})
+        }
+     } catch (error) {
+        console.error('Error verifying user:', error.message);
+        res.render('login', { message: 'An error occurred during login.' });
+     }
+}
+
+
 const pageNotfound = async(req,res)=>{
     try {
         res.render('pagenotFound')
@@ -129,7 +160,8 @@ const verifyOtp = async (req, res) => {
             password: userData.hashedPassword,
             phonenumber: userData.phone,
             isVerified: true
-        });
+        });   
+                  //you also have to add the signup user into session 
 
         await newUser.save();
 
@@ -199,4 +231,6 @@ module.exports = {
     loadVerifyOtp,
     verifyOtp,
     resendOtp,
+    loadLogin,
+    signin,
 }

@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
         required: false,
         unique:true,
         sparse:true,
-        default:null,
+        // default:null,
 
     },
     isActive: {
@@ -51,6 +51,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "/uploads/profile-pictures/default.png"
     },
+    is_admin: {
+        type: Number,
+        default:0
+      },
 
 }, { timestamps: true });
 userSchema.plugin(mongoosePaginate);

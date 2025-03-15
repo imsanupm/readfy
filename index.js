@@ -5,6 +5,7 @@ const path = require('path');
 const session = require('express-session');
 const connectDb = require('./config/connectDB');
 const userRouter = require('./router/userRouter');
+const adminRouter = require('./router/adminRoutes');
 const passportConfig = require('./config/passport');
 const passport = passportConfig.passport;
 
@@ -37,6 +38,7 @@ app.set('views', [
 
 
   app.use('/',userRouter);
+  app.use('/admin',adminRouter);
 
 connectDb()
 const PORT = process.env.PORT

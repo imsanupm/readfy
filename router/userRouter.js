@@ -7,6 +7,8 @@ const passport = passportConfig.passport;
 router.get('/', userController.loadHomepage);
 router.get('/signup', userController.loadSignup);
 router.post('/signup', userController.signup);
+router.get('/signin',userController.loadLogin);
+router.post('/signin',userController.signin);
 router.get('/verify-otp', userController.loadVerifyOtp);
 router.post('/verify-otp', userController.verifyOtp);
 router.get('/resend-otp', userController.resendOtp);
