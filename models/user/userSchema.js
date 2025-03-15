@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema({
         required: false
     },
     googleId: {
-        type: String
+        type: String,
+        unique:true
     },
     otp: {
         type: String
@@ -24,7 +25,11 @@ const userSchema = new mongoose.Schema({
     },
     phonenumber: {
         type: Number,
-        required: false
+        required: false,
+        unique:true,
+        sparse:true,
+        default:null,
+
     },
     isActive: {
         type: Boolean,

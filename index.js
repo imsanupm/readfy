@@ -5,8 +5,11 @@ const path = require('path');
 const session = require('express-session');
 const connectDb = require('./config/connectDB');
 const userRouter = require('./router/userRouter');
+const passportConfig = require('./config/passport');
+const passport = passportConfig.passport;
 
-console.log('hei')
+
+
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.set('view engine', 'ejs');
@@ -22,6 +25,10 @@ app.use(session({
     maxAge:72*60*60*1000 // 72 hourse
   }
 }))
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.set('views', [
     path.join(__dirname, 'views/user'),
     path.join(__dirname, 'views/admin')
