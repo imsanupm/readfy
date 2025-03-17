@@ -1,0 +1,162 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<%-include('partials/admin/headTag.ejs') %>
+<body>
+    <div class="screen-overlay"></div>
+   <%- include('partials/admin/navBar.ejs') %>
+    <main class="main-wrap">
+       <%- include('partials/admin/header.ejs') %> 
+
+
+       
+       <section class="content-main">
+        <div class="content-header">
+            <div>
+                <h2 class="content-title card-title">Categories </h2>
+                <p>Add, edit or delete a category</p>
+            </div>
+            <div>
+                <input type="text" placeholder="Search Categories" class="form-control bg-white">
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <form id="addCategoryForm">
+                            <div class="mb-4">
+                                <label for="product_name" class="form-label">Name</label>
+                                <input name="categoryName" type="text" placeholder="Type here" class="form-control" id="product_name" />
+                            </div>
+                            <div class="mb-4">
+                                <label for="product_slug" class="form-label">Slug</label>
+                                <input type="text" placeholder="Type here" class="form-control" id="product_slug" />
+                            </div>              
+                            <div class="mb-4">
+                                <label class="form-label">Description</label>
+                                <textarea name="description" placeholder="Type here" class="form-control"></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Create category</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="" />
+                                            </div>
+                                        </th>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>edit</th>
+                                        <th>statu</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+
+
+                                <tbody>
+                                    <% cat.forEach(category => { %>
+                                        <tr>
+                                            <td class="text-center">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="" />
+                                                </div>
+                                            </td>
+                                            <td><%= category._id %></td>
+                                            <td><b><%= category.name %></b></td>
+                                            <td><%= category.description %></td>
+                                            <!-- Replaced slug with Edit button -->
+                                            <td>
+                                                <button 
+                                                    onclick="window.location.href='/admin/category/edit/<%= category._id %>'"
+                                                    style="background-color: #007bff; color: white; padding: 5px 15px; border: none; border-radius: 4px; cursor: pointer;">
+                                                    Edit
+                                                </button>
+                                            </td>
+                                            <td><%= category.isListed ? 'Listed' : 'Unlisted' %></td>
+                                            <!-- Replaced action dropdown with Block/Unblock button -->
+                                            <td class="text-end">
+                                                <button 
+                                                    class="block-btn" 
+                                                    data-category-id="<%= category._id %>"
+                                                    style="background-color: <%= category.isListed ? '#dc3545' : '#007bff' %>; 
+                                                           color: white; 
+                                                           padding: 5px 15px; 
+                                                           border: none; 
+                                                           border-radius: 4px; 
+                                                           cursor: pointer;">
+                                                    <%= category.isListed ? 'Block' : 'Unblock' %>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+
+                            </table>
+                        </div>
+                    </div> <!-- .col// -->
+                </div> <!-- .row // -->
+            </div> <!-- card body .// -->
+        </div> <!-- card .// -->
+    </section> 
+
+    <script>
+    
+       document.getElementById('addCategoryForm').addEventListener('submit',async function(event) {
+        event.preventDefault()
+        const formData=new FormData(this)
+        //chatgpt console
+        let formObject = {};
+    formData.forEach((value, key) => {
+        formObject[key] = value;
+    });
+
+    console.log(formObject);
+
+const response = await fetch('/admin/addCategory',{
+    method : "Post",
+    headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formObject) 
+})
+
+   const result = await response.json()
+   console.log('result of respose',result)
+   if(result.success){
+    Swal.fire({
+            title: "Success!",
+            text: result.message,
+            icon: "success",
+            confirmButtonText: "OK",
+        })
+    // alert(result.message)
+    // location.href=result.redirectUrl
+   }else{
+    Swal.fire({
+            title: "Error!",
+            text: result.message || "Something went wrong!",
+            icon: "error",
+            confirmButtonText: "Try Again",
+        });
+   }
+       })
+    </script>
+
+
+
+        
+       <%- include('partials/admin/footer.ejs')  %>
+    </main>
+    <%- include('partials/admin/scriptTags.ejs') %>
+</body>
+
+</html>
