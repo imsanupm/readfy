@@ -31,10 +31,10 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.set('views', [
+    path.join(__dirname, 'views'),
     path.join(__dirname, 'views/user'),
     path.join(__dirname, 'views/admin')
   ]);
-  
 
 
   app.use('/',userRouter);

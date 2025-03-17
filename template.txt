@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<%-include('partials/admin/headTag.ejs') %>
+<body>
+    <div class="screen-overlay"></div>
+   <%- include('partials/admin/navBar.ejs') %>
+    <main class="main-wrap">
+       <%- include('partials/admin/header.ejs') %> 
+
+
+       
+<-- add section herre -->
+
+
+
+        
+        <%- include('partials/admin/footer.ejs')  %>
+    </main>
+    <%- include('partials/admin/scriptTags.ejs') %>
+</body>
+
+</html>

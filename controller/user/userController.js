@@ -102,7 +102,7 @@ const loadVerifyOtp = async (req, res) => {
 
 const signup = async (req, res) => {
     try {
-        const { email, password, phone, cPassword, name } = req.body;
+        const { email, password, Phone, cPassword, name } = req.body;
         
         // Fix password comparison
         if (password !== cPassword) {
@@ -126,7 +126,7 @@ const signup = async (req, res) => {
 
         // Store OTP and user data in session with expiry
         req.session.userOtp = otp;
-        req.session.userData = { email, hashedPassword, phone, name };
+        req.session.userData = { email, hashedPassword, Phone, name };
         req.session.otpExpiry = Date.now() + 120000; // 2 minutes in milliseconds
 
         res.redirect('/verify-otp');
@@ -158,7 +158,7 @@ const verifyOtp = async (req, res) => {
             name: userData.name,
             email: userData.email,
             password: userData.hashedPassword,
-            phonenumber: userData.phone,
+            phonenumber: userData.Phone,
             isVerified: true
         });   
                   //you also have to add the signup user into session 
