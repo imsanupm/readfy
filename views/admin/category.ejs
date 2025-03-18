@@ -8,6 +8,35 @@
     <main class="main-wrap">
        <%- include('partials/admin/header.ejs') %> 
 
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCategoryForm">
+                    <input type="hidden" id="categoryId" name="categoryId">
+
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="categoryName" name="categoryName" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">Category Description</label>
+                        <textarea class="form-control" id="categoryDescription" name="categoryDescription" rows="3" required></textarea>
+                    </div>
+
+                    <button  type="submit" class="btn btn-primary">Update Category</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 
        
        <section class="content-main">
@@ -76,10 +105,17 @@
                                             <!-- Replaced slug with Edit button -->
                                             <td>
                                                 <button 
-                                                    onclick="window.location.href='/admin/category/edit/<%= category._id %>'"
-                                                    style="background-color: #007bff; color: white; padding: 5px 15px; border: none; border-radius: 4px; cursor: pointer;">
-                                                    Edit
-                                                </button>
+                                                class="edit-category-btn"
+                                                id="editSubmit"
+                                                data-id="<%= category._id %>"
+                                                data-name="<%= category.name %>"
+                                                data-description="<%= category.description %>"
+
+                                                style="background-color: #007bff; color: white; padding: 5px 15px; border: none; border-radius: 4px; cursor: pointer;"
+                                                data-bs-toggle="modal" data-bs-target="#editCategoryModal">
+                                                Edit
+                                            </button>
+                                            
                                             </td>
                                             <td><%= category.isListed ? 'Listed' : 'Unlisted' %></td>
                                             <!-- Replaced action dropdown with Block/Unblock button -->
@@ -109,6 +145,7 @@
     </section> 
 
     <script>
+
     
        document.getElementById('addCategoryForm').addEventListener('submit',async function(event) {
         event.preventDefault()
@@ -149,6 +186,49 @@ const response = await fetch('/admin/addCategory',{
         });
    }
        })
+
+       
+
+    </script>
+
+    <script>
+
+document.querySelectorAll(".edit-category-btn").forEach(button => {
+    button.addEventListener("click", function() {
+        const categoryId = this.dataset.id
+        const categoryName = this.dataset.name
+        const categoryDescription = this.dataset.description
+        console.log(`category id kittiyath ${categoryId}`);
+
+        document.getElementById("categoryId").value = categoryId; // Set the hidden input value
+        document.getElementById("categoryName").value = categoryName; // Set the name input
+       document.getElementById("categoryDescription").value = categoryDescription; // Set the description input
+    });
+});
+
+
+
+   const data =    document.getElementById("editCategoryForm").addEventListener("submit", async function (event) {
+    event.preventDefault(); // Prevent default form submission
+
+    const updateData = new FormData(this); // Get form data
+
+    let modalForm = {};
+    updateData.forEach((value, key) => {
+        modalForm[key] = value;
+    });
+
+    console.log("======",modalForm); // Log the form data
+    const editCategoryFormDatas = await fetch('/adimn/updateCategory',{
+        method :"Post",
+        headers:{
+           "Content-Type":"application/json"
+        },
+        body: JSON.stringify(modalForm) 
+        
+    })
+});
+
     </script>
 
 

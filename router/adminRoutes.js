@@ -15,6 +15,7 @@ adminRouter.get('/userList',adminUserList.loadUserList);
 adminRouter.post('userList',adminUserList.searchUser);
 adminRouter.get('/category',adminCategory.categoryInfo);
 adminRouter.post('/addCategory',adminCategory.addCategory);
+adminRouter.post('/updateCategory',adminCategory.updateCategory)
 
 
 

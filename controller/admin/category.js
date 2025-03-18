@@ -50,8 +50,23 @@ const addCategory = async(req,res)=>{
     }
 }
 
+const updateCategory = async (req,res) => {
+    try {
+        const {categoryDescription,categoryName} = req.body;
+        console.log("req body",req.body)
+        console.log(`data form update catogory ${req.body}`)
+        if(!categoryDescription || !categoryName){
+            return res.status(400 ).json({message:'All fields are required'})
+        }
+        
+    } catch (error) {
+        
+    }
+}
+
 
 module.exports = {
     categoryInfo,
-    addCategory
+    addCategory,
+    updateCategory,
 }
