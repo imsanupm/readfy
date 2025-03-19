@@ -212,24 +212,86 @@ document.querySelectorAll(".edit-category-btn").forEach(button => {
     event.preventDefault(); // Prevent default form submission
 
     const updateData = new FormData(this); // Get form data
+    const categoryId = document.getElementById("categoryId").value;
 
     let modalForm = {};
     updateData.forEach((value, key) => {
         modalForm[key] = value;
     });
-
     console.log("======",modalForm); // Log the form data
-    const editCategoryFormDatas = await fetch('/adimn/updateCategory',{
+    const editCategoryFormDatas = await fetch(`/admin/updateCategory/${categoryId}`,{
         method :"Post",
         headers:{
            "Content-Type":"application/json"
         },
-        body: JSON.stringify(modalForm) 
-        
+        body: JSON.stringify(modalForm)  
     })
-});
+    // console.log("reesponse",editCategoryFormDatas)
+    const result = await editCategoryFormDatas.json()
+    console.log(result);
+    if(result.success){
+        // window.location.reload()
+        Swal.fire({
+            title: "Success!",
+            text: result.message,
+            icon: "success",
+            confirmButtonText: "OK",
+        })
+    }
+    else{
+        Swal.fire({
+            title: "error!",
+            text: result.message,
+            icon: "error",
+            confirmButtonText: "OK",
+        })
+    }
 
+});
     </script>
+
+<script>
+    
+    document.querySelectorAll('.block-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const categoryId = this.getAttribute('data-category-id');
+            const button = this;
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to ${button.textContent.toLowerCase()} this category.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, proceed!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/admin/category/toggle/${categoryId}`, {
+                        method: 'PUT'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success!', data.message, 'success');
+                            button.textContent = data.isListed ? 'Block' : 'Unblock';
+                            button.style.backgroundColor = data.isListed ? '#dc3545' : '#007bff';
+                        } else {
+                            Swal.fire('Error!', data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('Error!', 'Something went wrong!', 'error');
+                    });
+                }
+            });
+        });
+    });
+
+</script>
+  
+
+
 
 
 

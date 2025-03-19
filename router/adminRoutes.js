@@ -15,8 +15,8 @@ adminRouter.get('/userList',adminUserList.loadUserList);
 adminRouter.post('userList',adminUserList.searchUser);
 adminRouter.get('/category',adminCategory.categoryInfo);
 adminRouter.post('/addCategory',adminCategory.addCategory);
-adminRouter.post('/updateCategory',adminCategory.updateCategory)
-
+adminRouter.post('/updateCategory/:categoryId',adminCategory.updateCategory)
+adminRouter.put('/category/toggle/:id',adminCategory.catagoryStatus)
 
 
 module.exports= adminRouter;
