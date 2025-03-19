@@ -45,9 +45,13 @@
                 <h2 class="content-title card-title">Categories </h2>
                 <p>Add, edit or delete a category</p>
             </div>
-            <div>
-                <input type="text" placeholder="Search Categories" class="form-control bg-white">
+            <div style="display: flex; gap: 5px; max-width: 250px;">
+                <input type="text" id="categorySearch" placeholder="Search Categories" class="form-control bg-white" style="flex: 1; height: 35px;">
+                <button class="btn btn-primary" id="searchBtn" style="height: 35px; padding: 5px 10px;">
+                    Search
+                </button>
             </div>
+            
         </div>
         <div class="card">
             <div class="card-body">
