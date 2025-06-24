@@ -458,8 +458,134 @@ const createRazorpayOrder = async (
 };
 
 
+// const verifyRazorpayPayment = async (req, res) => {
+//   console.log('Verify payment function is working............')
+//   try {
+//     const {
+//       razorpay_order_id,
+//       razorpay_payment_id,
+//       razorpay_signature,
+//       addressId,
+//       paymentMethod,
+//       couponCode
+//     } = req.body;
+
+//     const userId = req.session.user_id;
+//     if (!userId) {
+//       return res.status(401).json({ success: false, message: 'User not authenticated' });
+//     }
+
+//     const generatedSignature = crypto
+//       .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+//       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+//       .digest('hex');
+
+//     if (generatedSignature !== razorpay_signature) {
+//       return res.status(400).json({ success: false, message: 'Invalid payment signature' });
+//     }
+
+   
+//     const orderDetails = req.session.razorpayOrder;
+//     if (!orderDetails) {
+//       return res.status(400).json({ success: false, message: 'Order details not found' });
+//     }
+
+//     const {
+//       userId: storedUserId,
+//       userData,
+//       orderedItems,
+//       totalPrice,
+//       discount,
+//       finalAmount,
+//       shippingCharge,
+//       totalQuantity,
+//       address,
+//       couponAmount,
+//       couponApplied,
+//       couponDetail,
+//       paymentMethod: storedPaymentMethod,
+//       razorpayOrderId
+//     } = orderDetails;
+ 
+//     if (userId !== storedUserId) {
+//       return res.status(400).json({ success: false, message: 'User ID mismatch', debug: { userId, storedUserId } });
+//     }
+    
+//     if (paymentMethod !== storedPaymentMethod) {
+//       return res.status(400).json({ success: false, message: 'Payment method mismatch', debug: { paymentMethod, storedPaymentMethod } });
+//     }
+    
+//     if (addressId !== address._id?.toString()) {
+//       return res.status(400).json({ success: false, message: 'Address ID mismatch', debug: { addressId, storedAddressId: address._id?.toString() } });
+//     }
+    
+
+
+    
+//     const orderData = new Order({
+//       userId,
+//       userData,
+//       orderedItems,
+//       totalPrice,
+//       discount,
+//       finalAmount,
+//       shippingCharge,
+//       totalQuantity,
+//       address,
+//       couponAmount,
+//       couponApplied,
+//       couponDetail,
+//       invoiceDate: new Date(),
+//       status: 'Pending',
+//       paymentMethod,
+//       paymentDetails: {
+//         paymentId: razorpay_payment_id,
+//         orderId: razorpay_order_id
+//       },
+//       createdOn: new Date()
+//     });
+//     console.log('order data in verify payment',orderData)
+//     await orderData.save();
+
+//     // make it reusable function after the review
+//     if (couponDetail && couponApplied) {
+//       const updatedCoupon = await Coupon.findOneAndUpdate(
+//         { _id: couponDetail },
+//         {
+//           $push: { usage: { userId } },
+//           $inc: { currentUsage: 1 }
+//         },
+//         { new: true }
+//       );
+
+//       if (updatedCoupon.currentUsage >= updatedCoupon.maxUsage) {
+//         await Coupon.updateOne(
+//           { _id: couponDetail },
+//           { $set: { isActive: false } }
+//         );
+//       }
+//     }
+
+//     // Clear cart
+//     await Cart.findOneAndUpdate({ userId }, { items: [] });
+
+//     // Clear session
+//     //delete req.session.razorpayOrder;
+
+//     return res.status(200).json({ success: true, message: 'Payment verified and order placed' });
+//   } catch (error) {
+//     console.error('Error verifying Razorpay payment:', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: `Payment verification failed: ${error.message}`
+//     });
+//   }
+// };
+
+
+
 const verifyRazorpayPayment = async (req, res) => {
-  console.log('Verify payment fn')
+  console.log('Verify payment fn');
   try {
     const {
       razorpay_order_id,
@@ -467,7 +593,8 @@ const verifyRazorpayPayment = async (req, res) => {
       razorpay_signature,
       addressId,
       paymentMethod,
-      couponCode
+      couponCode,
+      originalOrderId // <-- this will be passed during retry
     } = req.body;
 
     const userId = req.session.user_id;
@@ -484,7 +611,29 @@ const verifyRazorpayPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid payment signature' });
     }
 
-   
+    // ✅ If this is a retry payment, update the failed order
+    if (originalOrderId) {
+      const failedOrder = await Order.findOne({ "paymentDetails.orderId": originalOrderId });
+
+      if (!failedOrder) {
+        return res.status(404).json({ success: false, message: "Failed order not found" });
+      }
+
+      if (failedOrder.status !== 'Payment Failed') {
+        return res.status(400).json({ success: false, message: "Order is not in failed state" });
+      }
+
+      failedOrder.paymentDetails.paymentId = razorpay_payment_id;
+      failedOrder.status = 'Processing'; // ✅ Update status
+      failedOrder.invoiceDate = new Date();
+
+      await failedOrder.save();
+      await Cart.findOneAndUpdate({ userId }, { items: [] });
+
+      return res.status(200).json({ success: true, message: 'Payment verified and order updated' });
+    }
+
+    // ⬇️ Default logic for first-time payment
     const orderDetails = req.session.razorpayOrder;
     if (!orderDetails) {
       return res.status(400).json({ success: false, message: 'Order details not found' });
@@ -506,24 +655,19 @@ const verifyRazorpayPayment = async (req, res) => {
       paymentMethod: storedPaymentMethod,
       razorpayOrderId
     } = orderDetails;
-    console.log('req-body-address',addressId)
-    console.log('orderDetails address',address)
-   
+
     if (userId !== storedUserId) {
-      return res.status(400).json({ success: false, message: 'User ID mismatch', debug: { userId, storedUserId } });
+      return res.status(400).json({ success: false, message: 'User ID mismatch' });
     }
-    
+
     if (paymentMethod !== storedPaymentMethod) {
-      return res.status(400).json({ success: false, message: 'Payment method mismatch', debug: { paymentMethod, storedPaymentMethod } });
+      return res.status(400).json({ success: false, message: 'Payment method mismatch' });
     }
-    
+
     if (addressId !== address._id?.toString()) {
-      return res.status(400).json({ success: false, message: 'Address ID mismatch', debug: { addressId, storedAddressId: address._id?.toString() } });
+      return res.status(400).json({ success: false, message: 'Address ID mismatch' });
     }
-    
 
-
-    
     const orderData = new Order({
       userId,
       userData,
@@ -538,7 +682,7 @@ const verifyRazorpayPayment = async (req, res) => {
       couponApplied,
       couponDetail,
       invoiceDate: new Date(),
-      status: 'Pending',
+      status: 'Processing',
       paymentMethod,
       paymentDetails: {
         paymentId: razorpay_payment_id,
@@ -546,10 +690,10 @@ const verifyRazorpayPayment = async (req, res) => {
       },
       createdOn: new Date()
     });
-    console.log('order data in verify payment',orderData)
+
     await orderData.save();
 
-    // make it reusable function after the review
+    // Handle coupon usage
     if (couponDetail && couponApplied) {
       const updatedCoupon = await Coupon.findOneAndUpdate(
         { _id: couponDetail },
@@ -568,13 +712,13 @@ const verifyRazorpayPayment = async (req, res) => {
       }
     }
 
-    // Clear cart
     await Cart.findOneAndUpdate({ userId }, { items: [] });
 
-    // Clear session
-    delete req.session.razorpayOrder;
+    // Optionally clear session:
+    // delete req.session.razorpayOrder;
 
     return res.status(200).json({ success: true, message: 'Payment verified and order placed' });
+
   } catch (error) {
     console.error('Error verifying Razorpay payment:', error);
     return res.status(500).json({
@@ -586,15 +730,126 @@ const verifyRazorpayPayment = async (req, res) => {
 
 
 
-
-
-const getPaymentFailedPage = async (req,res) => {
+const saveFailedOrder = async (req, res) => {
   try {
-    res.render('payment-failed')
+
+    
+    
+    const { razorpayOrderId } = req.body;
+    const orderSession = req.session.razorpayOrder;
+
+    if (!orderSession || !orderSession.razorpayOrderId || orderSession.razorpayOrderId !== razorpayOrderId) {
+      return res.status(400).json({ success: false, message: 'No matching session data for failed order' });
+    }
+
+    // Check if already saved (avoid duplicates)
+    const existing = await Order.findOne({ "paymentDetails.orderId": razorpayOrderId });
+    if (existing) {
+      return res.status(200).json({ success: true, message: 'Order already exists' });
+    }
+
+    const {
+      userId,
+      userData,
+      orderedItems,
+      totalPrice,
+      discount,
+      finalAmount,
+      shippingCharge,
+      totalQuantity,
+      address,
+      couponAmount,
+      couponApplied,
+      couponDetail,
+      paymentMethod
+    } = orderSession;
+
+    const failedOrder = new Order({
+      userId,
+      userData,
+      orderedItems,
+      totalPrice,
+      discount,
+      finalAmount,
+      shippingCharge,
+      totalQuantity,
+      address,
+      couponAmount,
+      couponApplied,
+      couponDetail,
+      invoiceDate: new Date(),
+      status: 'Payment Failed',
+      paymentMethod,
+      paymentDetails: {
+        paymentId: null,
+        orderId: razorpayOrderId
+      },
+      createdOn: new Date()
+    });
+
+    await failedOrder.save();
+    console.log("Saved failed order:", failedOrder);
+
+    return res.status(200).json({ success: true, message: "Failed order saved" });
   } catch (error) {
-    console.log('errror during getPaymentFailed function',error)
+    console.error("Error saving failed order:", error);
+    return res.status(500).json({ success: false, message: "Failed to save order" });
   }
-}
+};
+
+
+
+
+
+const retryWithExistingRazorpayOrder = async (req, res) => {
+  try {
+    console.log('Retry request received');
+    
+    const { orderId } = req.body; // should include "order_"
+    const userId = req.session.user_id;
+
+    const order = await Order.findOne({ "paymentDetails.orderId": orderId });
+
+   console.log('Found order for retry:', order);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found or not in failed state" });
+    }
+
+    if (!order.paymentDetails?.orderId) {
+      return res.status(400).json({ success: false, message: "Razorpay order ID missing in DB" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      key: process.env.RAZORPAY_KEY_ID,
+      amount: Math.round(order.finalAmount * 100),
+      currency: "INR",
+      razorpayOrderId: order.paymentDetails.orderId, // Already full format
+      user: order.userData
+    });
+
+  } catch (error) {
+    console.error("Error during retry with existing Razorpay order:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+
+const getPaymentFailedPage = async (req, res) => {
+  try {
+    const razorpayOrderId = req.session?.razorpayOrder?.razorpayOrderId;
+    console.log('razorpayOrderId for failed page:', razorpayOrderId);
+    
+    res.render('payment-failed', { razorpayOrderId });
+  } catch (error) {
+    console.log('Error rendering payment failed page:', error);
+    res.status(500).send("Something went wrong");
+  }
+};
+
+
 
 
 
@@ -604,5 +859,7 @@ const getPaymentFailedPage = async (req,res) => {
 module.exports = {
   placeNewOrder,
   verifyRazorpayPayment,
-  getPaymentFailedPage
+  getPaymentFailedPage,
+  retryWithExistingRazorpayOrder,
+  saveFailedOrder
 }
