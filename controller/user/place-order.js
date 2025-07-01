@@ -23,7 +23,7 @@ const razorpay = new Razorpay({
 
 const placeNewOrder = async (req, res) => {
   try {
-    console.log("ree", req.body);
+  
     const userId = req.session.user_id;
     const { addressId, paymentMethod, couponCode } = req.body;
    
@@ -33,11 +33,14 @@ const placeNewOrder = async (req, res) => {
       path: 'items.productId',
       populate: { path: 'category', select: 'offer' }
     });
+    if(!cartData||!cartData.items||cartData.items.length<0){
+      return res.status(code.HttpStatus.BAD_REQUEST).json({message:"Your cart is empty please Select some product to place order ",success:false})
+    }
     const user = await User.findById(userId);
     const addressData = address.addresses.filter((val) => val._id.toString() == addressId);
 
     const orderedItems = [];
-
+     
     
     const {
       subTotal,
@@ -51,7 +54,13 @@ const placeNewOrder = async (req, res) => {
     for (const item of cartData.items) {
       const product = item.productId;
       const quantity = item.quantity;
-
+            if (product.quantity < quantity) {
+    return res.status(400).json({
+      success: false,
+      message: `We're sorry! Only ${product.quantity} unit(s) of "${product.productTitle}" are available in stock. Please update your cart before proceeding.`,
+      errorCode: "INSUFFICIENT_STOCK"
+    });
+  }
       orderedItems.push({
         product: product._id,
         productDetails: {
@@ -174,6 +183,17 @@ const placeNewOrder = async (req, res) => {
 const cod = async (req, res, cartData, addressData, user, userId, paymentMethod, orderedItems, subTotal, totalAmount, deliveryCharge, discountToApply, isCouponApplied, coupon) => {
   try {
       
+
+   if (!cartData || !cartData.items || cartData.items.length === 0) {
+  console.log("call is getting ==========");
+
+  return res.status(code.HttpStatus.NOT_FOUND).json({
+    message: "Your cart is empty. Please select some product to place an order.",
+    success: false
+  });
+}
+
+
       if(totalAmount>1000){
         return res.status(code.HttpStatus.BAD_REQUEST).json({ message: "You cannot make a Cash on Delivery purchase over ₹1000. insted of cod you can use online payment or wallet payment", success: false })
 
@@ -274,6 +294,15 @@ const walletPayment = async (
   coupon
 ) => {
   try {
+
+       if (!cartData || !cartData.items || cartData.items.length === 0) {
+  console.log("call is getting ==========");
+
+  return res.status(code.HttpStatus.NOT_FOUND).json({
+    message: "Your cart is empty. Please select some product to place an order.",
+    success: false
+  });
+}
    
     const wallet = await Wallet.findOne({ user: userId });
 
@@ -389,7 +418,16 @@ const createRazorpayOrder = async (
 ) => {
  
   try {
-   
+     
+          if (!cartData || !cartData.items || cartData.items.length === 0) {
+  console.log("call is getting ==========");
+
+  return res.status(code.HttpStatus.NOT_FOUND).json({
+    message: "Your cart is empty. Please select some product to place an order.",
+    success: false
+  });
+}
+     
     const order = await razorpay.orders.create({
       amount: Math.round(totalAmount * 100), 
       currency: 'INR',
