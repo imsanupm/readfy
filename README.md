@@ -169,7 +169,5 @@ npm start
 Visit the application
 Open your browser and go to:
 
-arduino
-Copy
-Edit
+
 http://localhost:3000
