@@ -162,10 +162,7 @@ GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 Start the server
 
-bash
-Copy
-Edit
-npm start
+
 Visit the application
 Open your browser and go to:
 
