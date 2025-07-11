@@ -132,7 +132,44 @@
 
 ## 🔧 Setup Instructions
 
-1. **Clone the repo**
+Follow these steps to run the project locally on your machine:
+
+1. **Clone the repository**
    ```bash
    git clone https://github.com/imsanupm/readify-bookstore.git
    cd readify-bookstore
+Install dependencies
+
+bash
+Copy
+Edit
+npm install
+Configure environment variables
+Create a .env file in the root of the project and add the following:
+
+env
+Copy
+Edit
+PORT=3000
+MONGO_URI=your_mongodb_connection_string
+SESSION_SECRET=your_session_secret
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+Start the server
+
+bash
+Copy
+Edit
+npm start
+Visit the application
+Open your browser and go to:
+
+arduino
+Copy
+Edit
+http://localhost:3000
